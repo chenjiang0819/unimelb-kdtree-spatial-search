@@ -1,13 +1,14 @@
 # MelbourneCensusDataset-ImplementingMapFunctionsWithKDTrees  
 
-Makefile will produce an executable program called map2. This program should take two command line arguments:  
+Makefile will produce an executable program called map2. This program takes two command line arguments:  
 (1) the name of the data file used to build the tree, and  
 (2) the name of anoutput file.
   
-Input of map2 program should:  
+Input of map2 program:  
 • map2 datafile outputfile then type in queries; or  
 • map2 datafile outputfile < queryfile  
 Queries should be entered as x,y,radius triplets separated by spaces: x y r  
+  
 Example output  
 This is an example of what might be output to the file after two queries:  
 144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 109260 
