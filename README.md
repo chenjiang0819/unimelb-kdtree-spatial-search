@@ -1,35 +1,9 @@
-# MelbourneCensusDataset-ImplementingMapFunctionsWithKDTrees
+# MelbourneCensusDataset-ImplementingMapFunctionsWithKDTrees  
 
-This program takes two command line arguments: (1) the name of the data file used to build the tree, and (2) the name of an
-output file.  
+Makefile will produce an executable program called map2. This program should take two command line arguments:  
+(1) the name of the data file used to build the tree, and  
+(2) the name of anoutput file.
   
-For example, input of map1 program should:  
-• map1 datafile outputfile then type in queries; or  
-• map1 datafile outputfile < queryfile  
-Queries should be entered as x,y pairs separated by a space: x y  
-Example output:  
-This is an example of what might be output to the file after two queries:  
-144.959522 -37.800095 −− > Census year: 2018 || Block ID: 240 || Property ID: 104466 || Base property ID: 104466 || CLUE small area: Carlton || Trading Name: The Bio 21 Cluster || Industry (ANZSIC4) code: 6910 || Industry (ANZSIC4) description: Scientific Research Services || x coordinate: 144.9593 || y coordinate: -37.8002 || Location: (-37.80023252, 144.9592806) ||  
-144.959522 -37.800095 −− > Census year: 2018 || Block ID: 240 || Property ID: 104466 || Base 
-property ID: 104466 || CLUE small area: Carlton || Trading Name: The University of Melbourne || Industry 
-(ANZSIC4) code: 8102 || Industry (ANZSIC4) description: Higher Education || x coordinate: 144.9593 
-|| y coordinate: -37.8002 || Location: (-37.80023252, 144.9592806) ||  
-144.959522 -37.800095 −− > Census year: 2018 || Block ID: 240 || Property ID: 104466 || Base
-property ID: 104466 || CLUE small area: Carlton || Trading Name: The Co-Op Bookstore || Industry (ANZSIC4)
-code: 4244 || Industry (ANZSIC4) description: Newspaper and Book Retailing || x coordinate: 144.9593
-|| y coordinate: -37.8002 || Location: (-37.80023252, 144.9592806) ||  
-144.959522 -37.800095 −− > Census year: 2018 || Block ID: 240 || Property ID: 104466 || Base 
-property ID: 104466 || CLUE small area: Carlton || Trading Name: Baretto Cafe || Industry (ANZSIC4) 
-code: 4511 || Industry (ANZSIC4) description: Cafes and Restaurants || x coordinate: 144.9593 || y 
-coordinate: -37.8002 || Location: (-37.80023252, 144.9592806) ||  
-0 0 −− > Census year: 2018 || Block ID: 571 || Property ID: 602254 || Base property ID: 602254 || 
-CLUE small area: Kensington || Trading Name: Shine Australia || Industry (ANZSIC4) code: 5511 || Industry 
-(ANZSIC4) description: Motion Picture and Video Production || x coordinate: 144.9081 || y coordinate: 
--37.7851 || Location: (-37.78505447, 144.9081466) ||  
-This is an example of what might be output to stdout:  
-144.959522 -37.800095 −− > 4815  
-0 0 −− > 359  
-
 Input of map2 program should:  
 • map2 datafile outputfile then type in queries; or  
 • map2 datafile outputfile < queryfile  
