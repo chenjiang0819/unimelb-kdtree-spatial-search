@@ -50,3 +50,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+/map2
+/.build/
+.DS_Store
+__pycache__/

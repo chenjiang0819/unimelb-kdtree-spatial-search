@@ -39,16 +39,16 @@ typedef struct{
 /****************************************************************/
 
 //function for making a new empty 2d tree
-tree_t *make_empty_tree();
+tree_t *make_empty_tree(void);
 
 //function for inserting the new nodes into 2d tree. 
 tree_t* insert_node(tree_t* tree, node_t* new_node);
 
 //use the recursive function to insert the nodes
-static node_t* recursive_insert(node_t* root, node_t* new_node);
+
 
 //free all nodes in the 2d tree
-static void free_nodes(node_t* root);
+
 
 //free all memory space associated with the tree structure
 void free_tree(tree_t* tree);
@@ -70,7 +70,7 @@ void recursive_search_in_radius(FILE* output_file, node_t* root, double x_for_se
 	double threshold, int* times, char* one_key, int* exist, int switchs);
 
 //read the key file and launch the searching  
-void output_result(tree_t* tree, FILE* output_file);
+int output_result(tree_t* tree, FILE* output_file);
 
 //use the fprint to print the information in the output file.
 void output_tree(node_t* curr, FILE* output_file, char* keep_one_key);
