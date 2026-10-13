@@ -1,260 +1,79 @@
-/* EInformation Retrieval Using a Linked list:
- *
- * This code is written by Chen Jiang, student ID: REDACTED_STUDENT_ID , 
- * for Assignment 2 of COMP20003 Algorithms and Data Structures 
- * in 09 September 2020 at the University of MElbourne
- */
+/* Original KD-tree coursework implementation by Chen Jiang.
+ * 2026 maintenance bounds CSV/input parsing while retaining the node/tree model. */
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
 #include <string.h>
-#include <assert.h>
+#include <errno.h>
+#include <limits.h>
+#include <ctype.h>
+#include <math.h>
+#include <sys/stat.h>
 #include "two_d_tree.h"
 #include "processingstring.h"
 
-#define COMMA 1
-#define NULLBIT 1
-#define BRACKET 1
-#define INITIALISE 0
-#define BEGINING 0
-#define BLOCK_ID 1
-#define PROPERTY_ID 2
-#define BASE_PRPERTY_ID 3
-#define INDUSTRY_CODE 6
-#define X_COORDINATE 8
-#define Y_COORDINATE 9
-#define REMOVE_EXTRA 10
-#define DOUBLE_FOR_TREE 11
+static int integer(const char *text, int *value) {
+    if (!*text) { *value=0;return 1; }
+    char *end;errno=0;long n=strtol(text,&end,10);
+    if (errno || *end || n<0 || n>INT_MAX) return 0;
+    *value=(int)n;return 1;
+}
+static int number(const char *text, double *value) {
+    if (!*text) { *value=0;return 1; }
+    char *end;errno=0;double n=strtod(text,&end);
+    if (errno || end==text || *end || !isfinite(n)) return 0;
+    *value=n;return 1;
+}
+static int location(const char *text, double *x, double *y) {
+    char *end;errno=0;
+    if (*text++!='(') return 0;
+    *y=strtod(text,&end);if (end==text || errno || !isfinite(*y)) return 0;
+    while (isspace((unsigned char)*end)) end++;
+    if (*end++!=',') return 0;
+    text=end;errno=0;*x=strtod(text,&end);
+    if (end==text || errno || !isfinite(*x)) return 0;
+    while (isspace((unsigned char)*end)) end++;
+    return *end==')' && end[1]=='\0';
+}
+static void free_record(node_t *node) {
+    if (!node) return;
+    free(node->clue_small_area);free(node->trading_name);
+    free(node->industry_description);free(node->location);free(node);
+}
 
-/****************************************************************/
-//the main function
-int main(int argc, char** argv){
-	int read;
-	int count;
-	int i;
-	int switchs;
-	//let computer to decide the size of the momery spaces that assigned to the buffer 
-	size_t len = BEGINING;
-	char* buffer = NULL;
-    //create a empty tree for further use
-    tree_t* tree = make_empty_tree();
-    //using read-only to read the csv file from the argv 
-    FILE* reading = fopen(argv[1],"r");
-    assert(reading != NULL);
-    //open the output file from the argv for further use 
-    FILE* output_file = fopen(argv[2],"w");
-    //skip the first line sicnce it is the titles of the columns
-    getline(&buffer, &len, reading);
-    //write the data in the nodes and insert the nodes in the tree
-	while((read = getline(&buffer, &len, reading)) != EOF){
-		count = BEGINING;
-		i = BEGINING;
-		switchs = BEGINING;
-		//create the new nodes
-		node_t* new_node = (node_t*)malloc(sizeof(*new_node));
-    	assert(new_node != NULL);
-    	//create a temporary string ro store information 
-    	char temp[strlen(buffer) + NULLBIT];
-    	//insert the data in the nodes
-    	while(buffer){
-    		if(buffer[count] == ',' && switchs == BEGINING){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> census_year = 0;
-    			}else{
-    				new_node -> census_year = atoi(temp);
-    			}
-    			memset(temp, BEGINING, sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		}else if(buffer[count] == ',' && switchs == BLOCK_ID){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> block_id = 0;
-    			}else{
-    				new_node -> block_id = atoi(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		}else if(buffer[count] == ',' && switchs == PROPERTY_ID){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> property_id = 0;
-    			}else{
-    				new_node -> property_id = atoi(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		}else if(buffer[count] == ',' && switchs == BASE_PRPERTY_ID){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> base_property_id = 0;
-    			}else{
-    				new_node -> base_property_id = atoi(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    			//process clue_small_area individually, in case there is special situation  
-				processing_clue_small_area(buffer, &count, new_node );
-				switchs++;
-				//process trading_name individually, in case there is special situation  
-   				processing_trading_name(buffer, &count, new_node );
-   				switchs++;
-    		}else if(buffer[count] == ',' && switchs == INDUSTRY_CODE){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> industry_code = 0;
-    			}else{
-    				new_node -> industry_code = atoi(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    			//process industry_description individually, in case there is special situation
-	    		processing_industry_description(buffer, &count, new_node );
-	    		switchs++;
-	    	}else if(buffer[count] == ',' && switchs == X_COORDINATE){
-	    		temp[i] = '\0';
-	    		if(temp[0] == '\0'){
-    				new_node -> x_coordinate = 0;
-    			}else{
-    				new_node -> x_coordinate = atof(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		}else if(buffer[count] == ',' && switchs == Y_COORDINATE){
-    			temp[i] = '\0';
-    			if(temp[0] == '\0'){
-    				new_node -> y_coordinate = 0;
-    			}else{
-    				new_node -> y_coordinate = atof(temp);
-    			}
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		//remove extra chars (we don't need to store in the momery) to save the space of memory
-    		}else if(buffer[count] == '(' && switchs == REMOVE_EXTRA){
-    			memset(temp ,BEGINING,sizeof(temp));
-    			i = BEGINING;
-    			count++;
-    			switchs++;
-    		}else if(buffer[count] == '\"' && switchs == DOUBLE_FOR_TREE){
-    			//for accuracy, we store the location as string instead of float or double.
-    			temp[i] = '\0';
-    			new_node -> location = (char*)malloc(strlen(temp) + NULLBIT);
-    			assert(new_node -> location != NULL);
-	    		strcpy(new_node -> location, temp);
-	    		char coordinates[strlen(temp) + NULLBIT];
-    			i = BEGINING;
-    			count = BEGINING;
-    			//convert the string to double for 2d tree
-    			while(temp[count] != '\0' ){
-    				if(temp[count] == ',' ){
-    					coordinates[i] = '\0';
-    					new_node -> y_for_tree = atof(coordinates);
-    					i = BEGINING;
-    					count++;
-    				}else if(temp[count] == ')'){
-    					coordinates[i] = '\0';
-    					new_node -> x_for_tree = atof(coordinates);
-    					break;
-    				}else{
-    					coordinates[i++] = temp[count++];
-    				}
-    			}
-    			break;
-    		}else{
-    			temp[i++] = buffer[count++];
-    		}
-
-    	}
-
-/*We also can use this more straightforward method as a solution for reading input. ：）
-    	
-    	//insert the data in the nodes
-		char *temp = NULL;
-        temp = strtok(buffer, ",");
-		count = count + strlen(temp)+COMMA;
-		new_node -> census_year = atoi(temp);
-
-		temp = strtok(buffer + count, ",");
-		count = count + strlen(temp)+COMMA;
-	    new_node -> block_id = atoi(temp);
-
-	    temp = strtok(buffer + count, ",");
-	    count = count + strlen(temp)+COMMA;
-	    new_node -> property_id = atoi(temp);
-
-	    temp = strtok(buffer + count, ",");
-	    count = count + strlen(temp)+COMMA;
-		new_node -> base_property_id = atoi(temp);
-		
-		//process clue_small_area individually, in case there is special situation  
-		processing_clue_small_area(buffer, &count, new_node );
-		//process trading_name individually, in case there is special situation  
-   		processing_trading_name(buffer, &count, new_node );
-
-		temp = strtok(buffer + count, ",");
-	    count = count + strlen(temp)+COMMA;
-	    new_node -> industry_code = atoi(temp);
-
-	    //process industry_description individually, in case there is special situation
-	    processing_industry_description(buffer, &count, new_node );
-
-		temp = strtok(buffer + count, ",");
-	    count = count + strlen(temp)+COMMA;
-	    new_node -> x_coordinate = atof(temp);
-		
-	    temp = strtok(buffer + count, ",");
-	    count = count + strlen(temp)+COMMA;
-	    new_node -> y_coordinate = atof(temp);
-
-	    //remove extra chars (we don't need to store in the momery) to save the space of memory
-	    temp = strtok(buffer + count, "(");
-        count = count + strlen(temp)+BRACKET;
-
-		//for accuracy, we store the location as string instead of float or double.
-	    temp = strtok(buffer + count, "\"");
-	    new_node -> location = (char*)malloc(strlen(temp) + NULLBIT);
-	    strcpy(new_node -> location, temp);
-
-	    //convert the string to double for 2d tree
-	    char* coordinate = strtok(temp, ",");
-	    count = strlen(coordinate)+COMMA;
-	    new_node -> y_for_tree = atof(coordinate);
-	    coordinate = strtok(temp + count, ")");
-	    new_node -> x_for_tree = atof(coordinate);*/
-	   
-	    //initialise the left, right and depth of the new nodes
-		new_node -> left = NULL;
-		new_node -> right = NULL;
-		new_node -> next = NULL;
-		new_node -> list_foot = NULL;
-		new_node -> depth = INITIALISE;
-		//insert the nodes into the 2d tree
-		tree = insert_node(tree, new_node);
-	}
-	//read the coordinates from the keyfile and print the results into the outputfile
-	output_result(tree, output_file);
-	//close the input file
-	fclose(reading);
-	//close the output file
-	fclose(output_file);
-	//free buffer
-    free(buffer);
-    buffer = NULL;
-	//free all memory space associated with the tree structure
-	free_tree(tree);
-    return 0;
+int main(int argc, char **argv) {
+    if (argc!=3) { fprintf(stderr,"Usage: map2 DATA.csv OUTPUT.txt < QUERIES.txt\n");return EXIT_FAILURE; }
+    struct stat input_stat,output_stat;
+    if (!stat(argv[1],&input_stat) && !stat(argv[2],&output_stat) &&
+        input_stat.st_dev==output_stat.st_dev && input_stat.st_ino==output_stat.st_ino) {
+        fprintf(stderr,"Input and output must be different files\n");return EXIT_FAILURE;
+    }
+    FILE *input=fopen(argv[1],"r"), *output=NULL;
+    tree_t *tree=make_empty_tree();
+    char *line=NULL,*fields[11];size_t capacity=0;node_t *node=NULL;
+    int success=0;
+    if (!input || !tree) goto done;
+    if (getline(&line,&capacity,input)<0 || !parse_csv_fields(line,fields,11) ||
+        strcmp(fields[0],"Census year") || strcmp(fields[10],"Location")) goto done;
+    while (getline(&line,&capacity,input)>=0) {
+        if (strlen(line)>1024*1024 || !parse_csv_fields(line,fields,11)) goto done;
+        node=calloc(1,sizeof(*node));if (!node) goto done;
+        if (!integer(fields[0],&node->census_year) || !integer(fields[1],&node->block_id) ||
+            !integer(fields[2],&node->property_id) || !integer(fields[3],&node->base_property_id) ||
+            !integer(fields[6],&node->industry_code) || !number(fields[8],&node->x_coordinate) ||
+            !number(fields[9],&node->y_coordinate) || !location(fields[10],&node->x_for_tree,&node->y_for_tree)) goto done;
+        node->clue_small_area=strdup(fields[4]);node->trading_name=strdup(fields[5]);
+        node->industry_description=strdup(fields[7]);node->location=strdup(fields[10]+1);
+        if (!node->clue_small_area || !node->trading_name || !node->industry_description || !node->location) goto done;
+        insert_node(tree,node);node=NULL;
+    }
+    if (ferror(input)) goto done;
+    output=fopen(argv[2],"w");if (!output) goto done;
+    success=output_result(tree,output);
+done:
+    if (!success) fprintf(stderr,"Invalid input or I/O failure: expected 11-field CSV and finite x y [radius] queries\n");
+    free_record(node);free(line);
+    if (input && fclose(input)) success=0;
+    if (output && fclose(output)) success=0;
+    if (tree) free_tree(tree);
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

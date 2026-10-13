@@ -6,6 +6,8 @@
 
 /****************************************************************/
 
+int parse_csv_fields(char *line, char **fields, size_t expected);
+
 //processing the trading name to prevent if there is special case.
 void processing_trading_name(char* buffer, int* count, node_t* new_node);
 

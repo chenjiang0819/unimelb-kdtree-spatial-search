@@ -1,37 +1,49 @@
-# MelbourneCensusDataset-ImplementingMapFunctionsWithKDTrees  
+# Melbourne Census KD-Tree Queries
 
-Makefile will produce an executable program called map2. This program takes two command line arguments:  
-(1) the name of the data file used to build the tree, and  
-(2) the name of anoutput file.
-  
-Input of map2 program:  
-• map2 datafile outputfile then type in queries; or  
-• map2 datafile outputfile < queryfile  
-Queries should be entered as x,y,radius triplets separated by spaces: x y r  
-  
-Example output  
-This is an example of what might be output to the file after two queries:  
-144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 109260 
-|| Base property ID: 109260 || CLUE small area: Melbourne (CBD) || Trading Name: Hungry Jack’s Pty Ltd 
-|| Industry (ANZSIC4) code: 4511 || Industry (ANZSIC4) description: Cafes and Restaurants || x coordinate: 
-144.9668 || y coordinate: -37.8171 || Location: (-37.81711586, 144.9668418) ||   
-144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 109258 
-|| Base property ID: 109258 || CLUE small area: Melbourne (CBD) || Trading Name: McDonalds || Industry 
-(ANZSIC4) code: 4511 || Industry (ANZSIC4) description: Cafes and Restaurants || x coordinate: 144.9669 
-|| y coordinate: -37.8172 || Location: (-37.81724484, 144.9669126) ||  
-144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 104015 
-|| Base property ID: 104015 || CLUE small area: Melbourne (CBD) || Trading Name: Dangerfield || Industry 
-(ANZSIC4) code: 4251 || Industry (ANZSIC4) description: Clothing Retailing || x coordinate: 144.9668 
-|| y coordinate: -37.8174 || Location: (-37.81741866, 144.9668092) ||  
-144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 109257 
-|| Base property ID: 109257 || CLUE small area: Melbourne (CBD) || Trading Name: Young & Jacksons || 
-Industry (ANZSIC4) code: 4520 || Industry (ANZSIC4) description: Pubs, Taverns and Bars || x coordinate: 
-144.967 || y coordinate: -37.8174 || Location: (-37.81735593, 144.967023) ||  
-144.967058 -37.817313 0.0005 −− > Census year: 2018 || Block ID: 15 || Property ID: 109259 
-|| Base property ID: 109259 || CLUE small area: Melbourne (CBD) || Trading Name: Souvenir Collection 
-|| Industry (ANZSIC4) code: 4310 || Industry (ANZSIC4) description: Non-Store Retailing || x coordinate: 
-144.9669 || y coordinate: -37.8172 || Location: (-37.8171602, 144.9668989) ||  
-144.963089 -37.799092 0.0005 −− > NOTFOUND  
-This is an example of what might be output to stdout:  
-144.967058 -37.817313 0.0005 −− > 678  
-144.963089 -37.799092 0.0005 −− > 1356  
+## Overview
+
+A handwritten C program for loading Melbourne census business records and answering nearest-location and radius queries using an explicit two-dimensional tree.
+
+## Original Context
+
+Chen Jiang’s algorithms/data-structures coursework, retaining the original alternating-axis nodes and linked duplicate-coordinate buckets. The preserved pre-maintenance snapshot is `43777e53ad251f2da570df720e1b3504b9205ca3`;
+its most recent original commit is dated 2022-01-13. This date describes Git evidence,
+not necessarily the complete implementation period.
+
+## What I Implemented
+
+CSV-to-record ingestion, alternating-axis tree insertion, duplicate-coordinate chains, recursive nearest and radius queries, comparison counts, and detailed record output.
+
+## Technical Approach
+
+Insertion preserves the original alternating-axis tree and duplicate buckets. Searches use the split-plane distance to decide whether another subtree can contain a nearer point or an in-radius record.
+
+CSV location coordinates retain double precision for tree geometry; original fields remain available in the formatted output. Query processing supports two coordinates for nearest search and an optional nonnegative radius.
+
+## Build / Run
+
+Run `make`, then `./map2 dataset.csv output.txt < queries.txt`. Each query is `x y` or `x y radius`. Run `make test` and `make sanitize`; Python standard library is sufficient for CLI tests.
+
+## Testing
+
+- Five CLI regression methods passed in normal macOS and ASan/UBSan builds, including quoted fields, duplicate coordinates, malformed input, empty trees, 80 random radius queries, supplied data, a 2,000-node degenerate tree, and same-file preservation.
+- 442 nearest queries passed an independent exhaustive C distance oracle; the original implementation missed one nearest point in that same harness.
+- Strict -O0 Clang core harness and GCC 14 Linux -Werror ASan/UBSan/LeakSanitizer checks passed.
+- Evidence: kdtree_before_tests.log, kdtree_nearest_before.log, kdtree_full_after.log, kdtree_linux_tests.log, kdtree_nearest_linux.log.
+
+## 2026 Maintenance
+
+- Bounded CSV field parsing now supports quotes, doubled quotes and empty fields; arguments, headers, numeric fields and queries are validated.
+- Corrected split-plane pruning and preserved duplicate-bucket ownership during output.
+- Rejected input/output paths that reference the same inode before opening output, protecting source data.
+- Added deterministic fixtures, exhaustive distance oracles, sanitizer targets and portable build instructions.
+
+The later work is AI-assisted maintenance, separate from the original implementation.
+The exact original snapshot remains on `archive/handwritten-original`.
+See [AI_PROJECT_REVIEW.md](AI_PROJECT_REVIEW.md) for a technical review.
+
+## Known Limitations
+
+- The original tree is not balanced; ordered data can produce linear-depth recursion. A 2,000-node degenerate tree was tested, not an unlimited adversarial workload.
+- Inputs are finite numeric coordinates; this is planar Euclidean search, not a geographic projection or geodesic library.
+- Allocation fault injection and all possible numeric extremes were not exhaustively tested.
