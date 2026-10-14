@@ -1,5 +1,13 @@
 # Melbourne Census KD-Tree Queries
 
+## Academic Context
+
+University: University of Melbourne  
+Course: Coursework; exact course number not independently established  
+Year: Exact original submission year not independently established  
+Project type: individual
+
+
 ## Overview
 
 A handwritten C program for loading Melbourne census business records and answering nearest-location and radius queries using an explicit two-dimensional tree.
